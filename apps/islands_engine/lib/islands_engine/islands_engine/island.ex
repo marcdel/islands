@@ -43,6 +43,14 @@ defmodule IslandsEngine.Island do
   1   1
   """
   defp offsets(:square), do: [{0, 0}, {0, 1}, {1, 0}, {1, 1}]
+
+  @doc """
+  1   1
+      1
+  1   1
+  """
+  defp offsets(:atoll), do: [{0, 0}, {0, 1}, {1, 1}, {2, 0}, {2, 1}]
+
   defp offsets(_), do: {:error, :invalid_island_type}
 
   defp add_coordinates(offsets, upper_left) do

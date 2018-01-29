@@ -16,6 +16,17 @@ defmodule IslandsEngine.IslandTest do
     assert MapSet.member?(coordinates, %IslandsEngine.Coordinate{col: 2, row: 2})
   end
 
+  test "can create an atoll island" do
+    {:ok, upper_left} = Coordinate.new(1, 1)
+    {:ok, %Island{coordinates: coordinates}} = Island.new(:atoll, upper_left)
+    IO.inspect(coordinates)
+    assert MapSet.member?(coordinates, %IslandsEngine.Coordinate{col: 1, row: 1})
+    assert MapSet.member?(coordinates, %IslandsEngine.Coordinate{col: 1, row: 3})
+    assert MapSet.member?(coordinates, %IslandsEngine.Coordinate{col: 2, row: 1})
+    assert MapSet.member?(coordinates, %IslandsEngine.Coordinate{col: 2, row: 2})
+    assert MapSet.member?(coordinates, %IslandsEngine.Coordinate{col: 2, row: 3})
+  end
+
   test "handles invalid island types" do
     {:ok, upper_left} = Coordinate.new(1, 1)
     {:error, :invalid_island_type} = Island.new(:triangle, upper_left)

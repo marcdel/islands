@@ -4,7 +4,7 @@ defmodule IslandsEngine.Island do
   """
 
   alias __MODULE__
-  alias IslandsEngine.Coordinate
+  alias IslandsEngine.{Coordinate, Island}
 
   @enforce_keys [:coordinates, :hit_coordinates]
   defstruct [:coordinates, :hit_coordinates]
@@ -36,6 +36,10 @@ defmodule IslandsEngine.Island do
       {:error, :invalid_coordinate} = error -> error
       error -> error
     end
+  end
+
+  def overlaps?(%Island{} = existing_island, %Island{} = new_island) do
+    not MapSet.disjoint?(existing_island.coordinates, new_island.coordinates)
   end
 
   @doc """

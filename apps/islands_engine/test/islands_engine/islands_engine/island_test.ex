@@ -90,4 +90,25 @@ defmodule IslandsEngine.IslandTest do
     {:ok, miss} = Coordinate.new(3, 1)
     :miss = Island.guess(island, miss)
   end
+
+  test "can check whether an island is forested" do
+    {:ok, island_location} = Coordinate.new(1, 1)
+    {:ok, island} = Island.new(:square, island_location)
+    refute Island.forested?(island)
+
+    {:hit, island} = Island.guess(island, island_location)
+    refute Island.forested?(island)
+
+    {:ok, second_coordinate} = Coordinate.new(1, 2)
+    {:hit, island} = Island.guess(island, second_coordinate)
+    refute Island.forested?(island)
+
+    {:ok, third_coordinate} = Coordinate.new(2, 1)
+    {:hit, island} = Island.guess(island, third_coordinate)
+    refute Island.forested?(island)
+
+    {:ok, fourth_coordinate} = Coordinate.new(2, 2)
+    {:hit, island} = Island.guess(island, fourth_coordinate)
+    assert Island.forested?(island)
+  end
 end

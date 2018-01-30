@@ -51,6 +51,10 @@ defmodule IslandsEngine.Island do
     end
   end
 
+  def forested?(%Island{} = island) do
+    MapSet.equal?(island.coordinates, island.hit_coordinates)
+  end
+
   @doc """
   1   1
   1   1

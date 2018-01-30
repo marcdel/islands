@@ -42,6 +42,15 @@ defmodule IslandsEngine.Island do
     not MapSet.disjoint?(existing_island.coordinates, new_island.coordinates)
   end
 
+  def guess(%Island{} = island, %Coordinate{} = coordinate) do
+    case MapSet.member?(island.coordinates, coordinate) do
+      true ->
+        hit_coordinates = MapSet.put(island.hit_coordinates, coordinate)
+        {:hit, %{island | hit_coordinates: hit_coordinates}}
+      false -> :miss
+    end
+  end
+
   @doc """
   1   1
   1   1

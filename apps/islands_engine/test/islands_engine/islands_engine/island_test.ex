@@ -78,4 +78,16 @@ defmodule IslandsEngine.IslandTest do
     refute Island.overlaps?(square, l_shape)
     refute Island.overlaps?(dot, l_shape)
   end
+
+  test "can guess coordinates on an island" do
+    {:ok, island_location} = Coordinate.new(1, 1)
+    {:ok, island} = Island.new(:square, island_location)
+
+    {:ok, hit} = Coordinate.new(1, 1)
+    {:hit, updated_island} = Island.guess(island, hit)
+    assert hit in updated_island.hit_coordinates
+
+    {:ok, miss} = Coordinate.new(3, 1)
+    :miss = Island.guess(island, miss)
+  end
 end

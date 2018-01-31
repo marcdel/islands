@@ -9,24 +9,8 @@ defmodule IslandsEngine.Island do
   @enforce_keys [:coordinates, :hit_coordinates]
   defstruct [:coordinates, :hit_coordinates]
 
-  @doc """
-    Given an island type and an initial coordinate, returns an island with
-    the list of coordinates making up the island.
+  def types(), do: [:atoll, :dot, :l_shape, :s_shape, :square]
 
-    ## Examples:
-
-      iex> IslandsEngine.Island.new(:square, %IslandsEngine.Coordinate{col: 1, row: 1})
-      {:ok,
-            %IslandsEngine.Island{
-              coordinates: #MapSet<[
-                %IslandsEngine.Coordinate{col: 1, row: 1},
-                %IslandsEngine.Coordinate{col: 1, row: 2},
-                %IslandsEngine.Coordinate{col: 2, row: 1},
-                %IslandsEngine.Coordinate{col: 2, row: 2}
-              ]>,
-              hit_coordinates: #MapSet<[]>
-            }}
-  """
   def new(type, %Coordinate{} = upper_left) do
     with [_ | _] = offsets <- offsets(type),
          %MapSet{} = coordinates <- add_coordinates(offsets, upper_left) do
@@ -73,7 +57,7 @@ defmodule IslandsEngine.Island do
   """
   defp offsets(:dot), do: [{0, 0}]
 
-  @dot """
+  @doc """
   1
   1
   1   1

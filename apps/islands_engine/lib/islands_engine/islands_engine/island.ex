@@ -31,7 +31,9 @@ defmodule IslandsEngine.Island do
       true ->
         hit_coordinates = MapSet.put(island.hit_coordinates, coordinate)
         {:hit, %{island | hit_coordinates: hit_coordinates}}
-      false -> :miss
+
+      false ->
+        :miss
     end
   end
 
@@ -73,13 +75,9 @@ defmodule IslandsEngine.Island do
   defp offsets(_), do: {:error, :invalid_island_type}
 
   defp add_coordinates(offsets, upper_left) do
-    Enum.reduce_while(
-      offsets,
-      MapSet.new(),
-      fn offset, acc ->
-        add_coordinate(acc, upper_left, offset)
-      end
-    )
+    Enum.reduce_while(offsets, MapSet.new(), fn offset, acc ->
+      add_coordinate(acc, upper_left, offset)
+    end)
   end
 
   defp add_coordinate(coordinates, %Coordinate{row: row, col: col}, {row_offset, col_offset}) do

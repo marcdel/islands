@@ -18,4 +18,14 @@ defmodule GameTest do
       }
     } = :sys.get_state(game)
   end
+
+  test "can add a second player" do
+    {:ok, game} = Game.start_link("Marc")
+    :ok = Game.add_player(game, "Jackie")
+
+    %{
+      player_two: %{name: "Jackie"},
+      rules: %Rules{state: :players_set}
+    } = :sys.get_state(game)
+  end
 end

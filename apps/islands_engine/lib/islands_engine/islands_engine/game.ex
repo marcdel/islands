@@ -1,4 +1,4 @@
-defmodule Game do
+defmodule IslandsEngine.Game do
   @moduledoc false
 
   use GenServer
@@ -24,6 +24,10 @@ defmodule Game do
 
   def position_island(game, player, key, row, col) when player in @players do
     GenServer.call(game, {:position_island, player, key, row, col})
+  end
+
+  def set_islands(game, player) when player in @players do
+    GenServer.call(game, {:set_islands, player})
   end
 
   def handle_call({:add_player, name}, _from, game_state) do
@@ -52,6 +56,20 @@ defmodule Game do
       :error -> {:reply, :error, game_state}
       {:error, :invalid_coordinate} -> {:reply, {:error, :invalid_coordinate}, game_state}
       {:error, :invalid_island_type} -> {:reply, {:error, :invalid_island_type}, game_state}
+    end
+  end
+
+  def handle_call({:set_islands, player}, _from, game_state) do
+    board = player_board(game_state, player)
+
+    with {:ok, rules} <- Rules.check(game_state.rules, {:set_islands, player}),
+         true <- Board.all_islands_positioned?(board) do
+      game_state
+      |> update_rules(rules)
+      |> reply_success({:ok, board})
+    else
+      :error -> {:reply, :error, game_state}
+      false -> {:reply, {:error, :not_all_islands_positioned}, game_state}
     end
   end
 

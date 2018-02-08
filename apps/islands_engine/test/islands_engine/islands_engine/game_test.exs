@@ -3,7 +3,7 @@ defmodule GameTest do
 
   use ExUnit.Case
 
-  alias IslandsEngine.{Board, Island, Guesses, Coordinate, Rules}
+  alias IslandsEngine.{Game, Board, Island, Guesses, Coordinate, Rules}
 
   test "can start a new game with a player name" do
     {:ok, game} = Game.start_link("Marc")
@@ -79,6 +79,48 @@ defmodule GameTest do
       end)
 
       assert :error = Game.position_island(game, :player_one, :dot, 1, 1)
+    end
+  end
+
+  describe "set_islands/2" do
+    setup do
+      {:ok, game} = Game.start_link("Marc")
+      :ok = Game.add_player(game, "Jackie")
+
+      [game: game]
+    end
+
+    test "players can set their islands", %{game: game} do
+      Game.position_island(game, :player_one, :atoll, 1, 1)
+      Game.position_island(game, :player_one, :dot, 1, 4)
+      Game.position_island(game, :player_one, :l_shape, 1, 5)
+      Game.position_island(game, :player_one, :s_shape, 5, 1)
+      Game.position_island(game, :player_one, :square, 5, 5)
+
+      assert {:ok, _board} = Game.set_islands(game, :player_one)
+
+      Game.position_island(game, :player_two, :atoll, 1, 1)
+      Game.position_island(game, :player_two, :dot, 1, 4)
+      Game.position_island(game, :player_two, :l_shape, 1, 5)
+      Game.position_island(game, :player_two, :s_shape, 5, 1)
+      Game.position_island(game, :player_two, :square, 5, 5)
+
+      assert {:ok, _board} = Game.set_islands(game, :player_two)
+    end
+
+    test "player cannot set islands unless they're all positioned", %{game: game} do
+      Game.position_island(game, :player_one, :atoll, 1, 1)
+
+      assert {:error, :not_all_islands_positioned} = Game.set_islands(game, :player_one)
+    end
+
+    test "handles rule violations", %{game: game} do
+      # We shouldn't be able to set islands when it's a player's turn.
+      :sys.replace_state(game, fn game_state ->
+        %{game_state | rules: %Rules{state: :player_one_turn}}
+      end)
+
+      assert :error = Game.set_islands(game, :player_one)
     end
   end
 end

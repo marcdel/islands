@@ -30,6 +30,10 @@ defmodule IslandsEngine.Game do
     GenServer.call(game, {:set_islands, player})
   end
 
+  def guess_coordinate(game, player, row, col) when player in @players do
+    GenServer.call(game, {:guess_coordinate, player, row, col})
+  end
+
   def handle_call({:add_player, name}, _from, game_state) do
     with {:ok, rules} <- Rules.check(game_state.rules, :add_player) do
       game_state
@@ -73,6 +77,29 @@ defmodule IslandsEngine.Game do
     end
   end
 
+  def handle_call({:guess_coordinate, player, row, col}, _from, game_state) do
+    opponent = opponent(player)
+    opponent_board = player_board(game_state, opponent)
+
+    with {:ok, rules} <- Rules.check(game_state.rules, {:guess_coordinate, player}),
+         {:ok, coordinate} <- Coordinate.new(row, col),
+         {hit_or_miss, forested_island, win_status, opponent_board} <-
+           Board.guess(opponent_board, coordinate),
+         {:ok, rules} <- Rules.check(rules, {:win_check, win_status}) do
+      game_state
+      |> update_board(opponent, opponent_board)
+      |> update_guesses(player, hit_or_miss, coordinate)
+      |> update_rules(rules)
+      |> reply_success({hit_or_miss, forested_island, win_status})
+    else
+      :error -> {:reply, :error, game_state}
+      {:error, :invalid_coordinate} -> {:reply, {:error, :invalid_coordinate}, game_state}
+    end
+  end
+
+  defp opponent(:player_one), do: :player_two
+  defp opponent(:player_two), do: :player_one
+
   defp player_board(game_state, player), do: Map.get(game_state, player).board
 
   defp set_player_two_name(game_state, player_name) do
@@ -83,6 +110,12 @@ defmodule IslandsEngine.Game do
 
   defp update_board(game_state, player, board) do
     Map.update!(game_state, player, fn player -> %{player | board: board} end)
+  end
+
+  def update_guesses(game_state, player, hit_or_miss, coordinate) do
+    update_in(game_state[player].guesses, fn guesses ->
+      Guesses.add(guesses, hit_or_miss, coordinate)
+    end)
   end
 
   defp reply_success(game_state, reply), do: {:reply, reply, game_state}

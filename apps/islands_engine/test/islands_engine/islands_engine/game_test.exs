@@ -123,4 +123,55 @@ defmodule GameTest do
       assert :error = Game.set_islands(game, :player_one)
     end
   end
+
+  describe "guess_coordinate/4" do
+    setup do
+      {:ok, game} = Game.start_link("Marc")
+      :ok = Game.add_player(game, "Jackie")
+
+      Game.position_island(game, :player_one, :atoll, 1, 1)
+      Game.position_island(game, :player_one, :dot, 1, 4)
+      Game.position_island(game, :player_one, :l_shape, 1, 5)
+      Game.position_island(game, :player_one, :s_shape, 5, 1)
+      Game.position_island(game, :player_one, :square, 5, 5)
+      Game.set_islands(game, :player_one)
+
+      Game.position_island(game, :player_two, :atoll, 1, 1)
+      Game.position_island(game, :player_two, :dot, 1, 4)
+      Game.position_island(game, :player_two, :l_shape, 1, 5)
+      Game.position_island(game, :player_two, :s_shape, 5, 1)
+      Game.position_island(game, :player_two, :square, 5, 5)
+      Game.set_islands(game, :player_two)
+
+      [game: game]
+    end
+
+    test "players can guess coordinates" do
+      {:ok, game} = Game.start_link("Marc")
+      Game.add_player(game, "Jackie")
+      Game.position_island(game, :player_one, :dot, 1, 1)
+      Game.position_island(game, :player_two, :square, 1, 1)
+      game_state = :sys.get_state(game)
+
+      # Get to the start of the game with only two islands positioned
+      game_state =
+        :sys.replace_state(game, fn data ->
+          %{game_state | rules: %Rules{state: :player_one_turn}}
+        end)
+
+      assert {:hit, :none, :no_win} = Game.guess_coordinate(game, :player_one, 1, 1)
+      assert :error = Game.guess_coordinate(game, :player_one, 1, 1)
+      assert {:miss, :none, :no_win} = Game.guess_coordinate(game, :player_two, 2, 2)
+      assert {:hit, :none, :no_win} = Game.guess_coordinate(game, :player_one, 2, 2)
+      assert {:hit, :dot, :win} = Game.guess_coordinate(game, :player_two, 1, 1)
+    end
+
+    test "handles rule violations", %{game: game} do
+      assert :error = Game.guess_coordinate(game, :player_two, 1, 1)
+    end
+
+    test "handles invalid coordinates", %{game: game} do
+      assert {:error, :invalid_coordinate} = Game.guess_coordinate(game, :player_one, 11, 11)
+    end
+  end
 end

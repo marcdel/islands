@@ -8,8 +8,10 @@ defmodule IslandsEngine.Game do
   @players [:player_one, :player_two]
 
   def start_link(player_name) when is_binary(player_name) do
-    GenServer.start_link(__MODULE__, player_name, [])
+    GenServer.start_link(__MODULE__, player_name, name: via_tuple(player_name))
   end
+
+  def via_tuple(player_name), do: {:via, Registry, {Registry.Game, player_name}}
 
   def init(name) do
     player_one = %{name: name, board: Board.new(), guesses: Guesses.new()}

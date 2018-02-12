@@ -6,13 +6,13 @@ defmodule GameTest do
   alias IslandsEngine.{Game, Board, Island, Guesses, Coordinate, Rules}
 
   test "can start a new game with a player name" do
-    {:ok, game} = Game.start_link("Marc")
+    {:ok, game} = Game.start_link("Player 1")
 
     %{
       player_one: %{
         board: %{},
         guesses: %Guesses{},
-        name: "Marc"
+        name: "Player 1"
       },
       player_two: %{
         board: %{},
@@ -28,12 +28,12 @@ defmodule GameTest do
   end
 
   test "can add a second player" do
-    {:ok, game} = Game.start_link("Marc")
-    :ok = Game.add_player(game, "Jackie")
+    {:ok, game} = Game.start_link("Player 1")
+    :ok = Game.add_player(game, "Player 2")
 
     %{
       player_two: %{
-        name: "Jackie"
+        name: "Player 2"
       },
       rules: %Rules{
         state: :players_set
@@ -43,8 +43,8 @@ defmodule GameTest do
 
   describe "position_island/5" do
     setup do
-      {:ok, game} = Game.start_link("Marc")
-      :ok = Game.add_player(game, "Jackie")
+      {:ok, game} = Game.start_link("Player 1")
+      :ok = Game.add_player(game, "Player 2")
 
       [game: game]
     end
@@ -84,8 +84,8 @@ defmodule GameTest do
 
   describe "set_islands/2" do
     setup do
-      {:ok, game} = Game.start_link("Marc")
-      :ok = Game.add_player(game, "Jackie")
+      {:ok, game} = Game.start_link("Player 1")
+      :ok = Game.add_player(game, "Player 2")
 
       [game: game]
     end
@@ -126,8 +126,8 @@ defmodule GameTest do
 
   describe "guess_coordinate/4" do
     setup do
-      {:ok, game} = Game.start_link("Marc")
-      :ok = Game.add_player(game, "Jackie")
+      {:ok, game} = Game.start_link("Player 1")
+      :ok = Game.add_player(game, "Player 2")
 
       Game.position_island(game, :player_one, :atoll, 1, 1)
       Game.position_island(game, :player_one, :dot, 1, 4)
@@ -147,8 +147,8 @@ defmodule GameTest do
     end
 
     test "players can guess coordinates" do
-      {:ok, game} = Game.start_link("Marc")
-      Game.add_player(game, "Jackie")
+      {:ok, game} = Game.start_link("Cheater 1")
+      Game.add_player(game, "Cheater 2")
       Game.position_island(game, :player_one, :dot, 1, 1)
       Game.position_island(game, :player_two, :square, 1, 1)
       game_state = :sys.get_state(game)

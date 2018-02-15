@@ -15,11 +15,15 @@ defmodule IslandsEngine.Game do
 
   def via_tuple(player_name), do: {:via, Registry, {Registry.Game, player_name}}
 
-  def init(name) do
-    player_one = %{name: name, board: Board.new(), guesses: Guesses.new()}
-    player_two = %{name: nil, board: Board.new(), guesses: Guesses.new()}
+  def init(player_name) do
+    game_state =
+      case :ets.lookup(:game_state, player_name) do
+        [] -> fresh_state(player_name)
+        [{_key, state}] -> state
+      end
 
-    {:ok, %{player_one: player_one, player_two: player_two, rules: Rules.new()}, @timeout}
+    :ets.insert(:game_state, {player_name, game_state})
+    {:ok, game_state, @timeout}
   end
 
   def add_player(game, player_name) when is_binary(player_name) do
@@ -105,6 +109,12 @@ defmodule IslandsEngine.Game do
     {:stop, {:shutdown, :timeout}, game_state}
   end
 
+  defp fresh_state(name) do
+    player_one = %{name: name, board: Board.new(), guesses: Guesses.new()}
+    player_two = %{name: nil, board: Board.new(), guesses: Guesses.new()}
+    %{player_one: player_one, player_two: player_two, rules: Rules.new()}
+  end
+
   defp opponent(:player_one), do: :player_two
   defp opponent(:player_two), do: :player_one
 
@@ -126,7 +136,10 @@ defmodule IslandsEngine.Game do
     end)
   end
 
-  defp reply_success(game_state, reply), do: {:reply, reply, game_state, @timeout}
+  defp reply_success(game_state, reply) do
+    :ets.insert(:game_state, {game_state.player_one.name, game_state})
+    {:reply, reply, game_state, @timeout}
+  end
 
   defp reply_error(reply, game_state), do: {:reply, reply, game_state, @timeout}
 end

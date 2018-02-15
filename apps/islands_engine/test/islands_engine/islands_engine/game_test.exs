@@ -174,4 +174,76 @@ defmodule GameTest do
       assert {:error, :invalid_coordinate} = Game.guess_coordinate(game, :player_one, 11, 11)
     end
   end
+
+  test "initializes the game with existing state if it exists" do
+    existing_state = {
+      :"Player 1",
+      %{
+        player_one: %{
+          board: %{},
+          guesses: %Guesses{hits: [], misses: []},
+          name: "Player 1"
+        },
+        player_two: %{
+          board: %{},
+          guesses: %Guesses{hits: [], misses: []},
+          name: "Player 2"
+        },
+        rules: %Rules{
+          player_one: :islands_set,
+          player_two: :islands_set,
+          state: :player_one_turn
+        }
+      }
+    }
+
+    :ets.insert(:game_state, {"Player 1", existing_state})
+
+    {:ok, game} = Game.start_link("Player 1")
+    initial_state = :sys.get_state(game)
+
+    assert initial_state == existing_state
+  end
+
+  test "game state is saved after every successful event" do
+    {:ok, game} = Game.start_link("Player 1")
+    :ok = Game.add_player(game, "Player 2")
+
+    Game.position_island(game, :player_one, :atoll, 1, 1)
+    Game.position_island(game, :player_one, :dot, 1, 4)
+    Game.position_island(game, :player_one, :l_shape, 1, 5)
+    Game.position_island(game, :player_one, :s_shape, 5, 1)
+    Game.position_island(game, :player_one, :square, 5, 5)
+    Game.set_islands(game, :player_one)
+
+    state = query_saved_state("Player 1")
+    assert MapSet.size(state.player_one.board.atoll.coordinates) == 5
+    assert MapSet.size(state.player_one.board.dot.coordinates) == 1
+    assert MapSet.size(state.player_one.board.l_shape.coordinates) == 4
+    assert MapSet.size(state.player_one.board.s_shape.coordinates) == 4
+    assert MapSet.size(state.player_one.board.square.coordinates) == 4
+    assert state.rules.player_one == :islands_set
+
+    Game.position_island(game, :player_two, :atoll, 1, 1)
+    Game.position_island(game, :player_two, :dot, 1, 4)
+    Game.position_island(game, :player_two, :l_shape, 1, 5)
+    Game.position_island(game, :player_two, :s_shape, 5, 1)
+    Game.position_island(game, :player_two, :square, 5, 5)
+    Game.set_islands(game, :player_two)
+
+    state = query_saved_state("Player 1")
+    assert MapSet.size(state.player_two.board.atoll.coordinates) == 5
+    assert MapSet.size(state.player_two.board.dot.coordinates) == 1
+    assert MapSet.size(state.player_two.board.l_shape.coordinates) == 4
+    assert MapSet.size(state.player_two.board.s_shape.coordinates) == 4
+    assert MapSet.size(state.player_two.board.square.coordinates) == 4
+    assert state.rules.player_two == :islands_set
+
+    assert state.rules.state == :player_one_turn
+  end
+
+  defp query_saved_state(player_name) do
+    [{player_name, saved_state}] = :ets.lookup(:game_state, player_name)
+    saved_state
+  end
 end

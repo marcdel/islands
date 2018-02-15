@@ -3,6 +3,12 @@ defmodule IslandsEngine.GameSupervisorTest do
 
   alias IslandsEngine.{GameSupervisor, Game, Guesses, Rules}
 
+  setup do
+    on_exit(fn ->
+      GameSupervisor.stop_game("Player 1")
+    end)
+  end
+
   test "supervisor can start new games with a player name" do
     {:ok, game} = GameSupervisor.start_game("Player 1")
 
@@ -23,8 +29,6 @@ defmodule IslandsEngine.GameSupervisorTest do
         state: :initialized
       }
     } = :sys.get_state(game)
-
-    GameSupervisor.stop_game("Player 1")
   end
 
   test "can stop existing games" do
@@ -39,5 +43,22 @@ defmodule IslandsEngine.GameSupervisorTest do
 
   test "cannot stop non-existent games" do
     assert {:error, _} = GameSupervisor.stop_game("Made up game")
+  end
+
+  test "can recover from crashes" do
+    {:ok, game} = GameSupervisor.start_game("Player 1")
+    Game.add_player(game, "Player 2")
+
+    via = Game.via_tuple("Player 1")
+
+    state = :sys.get_state(via)
+    assert state.player_one.name == "Player 1"
+    assert state.player_two.name == "Player 2"
+
+    Process.exit(game, :whoops)
+
+    state = :sys.get_state(via)
+    assert state.player_one.name == "Player 1"
+    assert state.player_two.name == "Player 2"
   end
 end

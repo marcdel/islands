@@ -7,6 +7,8 @@ defmodule GameTest do
 
   setup do
     on_exit(fn ->
+      # This is lazy as hell, but since all the examples are using "Player 1"
+      # we can stop them all here rather than in each test.
       GameSupervisor.stop_game("Player 1")
     end)
   end

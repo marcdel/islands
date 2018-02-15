@@ -115,6 +115,13 @@ defmodule IslandsEngine.Game do
     {:stop, {:shutdown, :timeout}, game_state}
   end
 
+  def terminate({:shutdown, :timeout}, game_state) do
+    :ets.delete(:game_state, game_state.player_one.name)
+    :ok
+  end
+
+  def terminate(_reason, _state), do: :ok
+
   defp fresh_state(name) do
     player_one = %{name: name, board: Board.new(), guesses: Guesses.new()}
     player_two = %{name: nil, board: Board.new(), guesses: Guesses.new()}

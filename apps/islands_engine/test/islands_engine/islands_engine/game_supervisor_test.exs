@@ -4,14 +4,16 @@ defmodule IslandsEngine.GameSupervisorTest do
   alias IslandsEngine.{GameSupervisor, Game, Guesses, Rules}
 
   setup do
+    {:ok, game} = GameSupervisor.start_game("Player 1")
+
     on_exit(fn ->
       GameSupervisor.stop_game("Player 1")
     end)
+
+    %{game: game}
   end
 
-  test "supervisor can start new games with a player name" do
-    {:ok, game} = GameSupervisor.start_game("Player 1")
-
+  test "supervisor can start new games with a player name", %{game: game} do
     %{
       player_one: %{
         board: %{},
@@ -31,22 +33,24 @@ defmodule IslandsEngine.GameSupervisorTest do
     } = :sys.get_state(game)
   end
 
-  test "can stop existing games" do
-    {:ok, game} = GameSupervisor.start_game("Player 1")
-    assert Process.alive?(game)
+  describe "stop_game/1" do
+    test "can stop existing games and clean up their state", %{game: game} do
+      assert Process.alive?(game)
 
-    assert :ok = GameSupervisor.stop_game("Player 1")
-    refute Process.alive?(game)
+      assert :ok = GameSupervisor.stop_game("Player 1")
+      refute Process.alive?(game)
 
-    assert Game.via_tuple("Player 1") |> GenServer.whereis() == nil
+      assert Game.via_tuple("Player 1") |> GenServer.whereis() == nil
+
+      assert :ets.lookup(:game_state, "Player 1") == []
+    end
+
+    test "cannot stop non-existent games" do
+      assert {:error, _} = GameSupervisor.stop_game("Made up game")
+    end
   end
 
-  test "cannot stop non-existent games" do
-    assert {:error, _} = GameSupervisor.stop_game("Made up game")
-  end
-
-  test "can recover from crashes" do
-    {:ok, game} = GameSupervisor.start_game("Player 1")
+  test "can recover from crashes", %{game: game} do
     Game.add_player(game, "Player 2")
 
     via = Game.via_tuple("Player 1")

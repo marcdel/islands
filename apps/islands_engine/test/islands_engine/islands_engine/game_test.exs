@@ -3,7 +3,13 @@ defmodule GameTest do
 
   use ExUnit.Case
 
-  alias IslandsEngine.{Game, Board, Island, Guesses, Coordinate, Rules}
+  alias IslandsEngine.{GameSupervisor, Game, Board, Island, Guesses, Coordinate, Rules}
+
+  setup do
+    on_exit(fn ->
+      GameSupervisor.stop_game("Player 1")
+    end)
+  end
 
   test "can start a new game with a player name" do
     {:ok, game} = Game.start_link("Player 1")
@@ -176,24 +182,21 @@ defmodule GameTest do
   end
 
   test "initializes the game with existing state if it exists" do
-    existing_state = {
-      :"Player 1",
-      %{
-        player_one: %{
-          board: %{},
-          guesses: %Guesses{hits: [], misses: []},
-          name: "Player 1"
-        },
-        player_two: %{
-          board: %{},
-          guesses: %Guesses{hits: [], misses: []},
-          name: "Player 2"
-        },
-        rules: %Rules{
-          player_one: :islands_set,
-          player_two: :islands_set,
-          state: :player_one_turn
-        }
+    existing_state = %{
+      player_one: %{
+        board: %{},
+        guesses: %Guesses{hits: [], misses: []},
+        name: "Player 1"
+      },
+      player_two: %{
+        board: %{},
+        guesses: %Guesses{hits: [], misses: []},
+        name: "Player 2"
+      },
+      rules: %Rules{
+        player_one: :islands_set,
+        player_two: :islands_set,
+        state: :player_one_turn
       }
     }
 
@@ -203,6 +206,8 @@ defmodule GameTest do
     initial_state = :sys.get_state(game)
 
     assert initial_state == existing_state
+
+    :ets.delete(:game_state, "Player 1")
   end
 
   test "game state is saved after every successful event" do

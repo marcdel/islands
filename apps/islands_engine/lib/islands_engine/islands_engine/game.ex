@@ -1,7 +1,8 @@
 defmodule IslandsEngine.Game do
   @moduledoc false
 
-  @timeout 15_000
+  #  @timeout 15_000
+  @timeout 60 * 60 * 24 * 1_000
 
   use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
@@ -16,14 +17,8 @@ defmodule IslandsEngine.Game do
   def via_tuple(player_name), do: {:via, Registry, {Registry.Game, player_name}}
 
   def init(player_name) do
-    game_state =
-      case :ets.lookup(:game_state, player_name) do
-        [] -> fresh_state(player_name)
-        [{_key, state}] -> state
-      end
-
-    :ets.insert(:game_state, {player_name, game_state})
-    {:ok, game_state, @timeout}
+    send(self(), {:set_state, player_name})
+    {:ok, fresh_state(player_name)}
   end
 
   def add_player(game, player_name) when is_binary(player_name) do
@@ -40,6 +35,17 @@ defmodule IslandsEngine.Game do
 
   def guess_coordinate(game, player, row, col) when player in @players do
     GenServer.call(game, {:guess_coordinate, player, row, col})
+  end
+
+  def handle_info({:set_state, player_name}, _game_state) do
+    game_state =
+      case :ets.lookup(:game_state, player_name) do
+        [] -> fresh_state(player_name)
+        [{_key, state}] -> state
+      end
+
+    :ets.insert(:game_state, {player_name, game_state})
+    {:noreply, game_state, @timeout}
   end
 
   def handle_call({:add_player, name}, _from, game_state) do

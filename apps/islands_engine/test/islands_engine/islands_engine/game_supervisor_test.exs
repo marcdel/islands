@@ -50,12 +50,14 @@ defmodule IslandsEngine.GameSupervisorTest do
     Game.add_player(game, "Player 2")
 
     via = Game.via_tuple("Player 1")
-
     state = :sys.get_state(via)
     assert state.player_one.name == "Player 1"
     assert state.player_two.name == "Player 2"
 
     Process.exit(game, :whoops)
+
+    # Wait 1 millisecond for genserver to restart
+    :timer.sleep(1)
 
     state = :sys.get_state(via)
     assert state.player_one.name == "Player 1"

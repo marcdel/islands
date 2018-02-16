@@ -13,7 +13,7 @@ defmodule IslandsEngine.GameSupervisorTest do
     %{game: game}
   end
 
-  test "supervisor can start new games with a player name", %{game: game} do
+  test "supervisor can start new games with a player name" do
     %{
       player_one: %{
         board: %{},
@@ -30,7 +30,7 @@ defmodule IslandsEngine.GameSupervisorTest do
         player_two: :islands_not_set,
         state: :initialized
       }
-    } = :sys.get_state(game)
+    } = GameState.lookup("Player 1")
   end
 
   describe "stop_game/1" do
@@ -42,7 +42,7 @@ defmodule IslandsEngine.GameSupervisorTest do
 
       assert Game.via_tuple("Player 1") |> GenServer.whereis() == nil
 
-      assert GameState.lookup("Player 1") == []
+      assert GameState.lookup("Player 1") == nil
     end
 
     test "cannot stop non-existent games" do

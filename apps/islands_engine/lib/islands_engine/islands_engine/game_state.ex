@@ -1,19 +1,24 @@
 defmodule IslandsEngine.GameState do
   @moduledoc false
 
-  def new() do
-    :ets.new(:game_state, [:public, :named_table])
+  @table :game_state
+
+  def new do
+    :ets.new(@table, [:public, :named_table])
   end
 
   def insert(key, game_state) do
-    :ets.insert(:game_state, {key, game_state})
+    :ets.insert(@table, {key, game_state})
   end
 
   def lookup(key) do
-    :ets.lookup(:game_state, key)
+    case :ets.lookup(@table, key) do
+      [{^key, game_state}] -> game_state
+      [] -> nil
+    end
   end
 
   def delete(key) do
-    :ets.delete(:game_state, key)
+    :ets.delete(@table, key)
   end
 end

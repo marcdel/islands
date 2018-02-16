@@ -40,8 +40,8 @@ defmodule IslandsEngine.Game do
   def handle_info({:set_state, player_name}, _game_state) do
     game_state =
       case GameState.lookup(player_name) do
-        [] -> fresh_state(player_name)
-        [{_key, state}] -> state
+        nil -> fresh_state(player_name)
+        state -> state
       end
 
     GameState.insert(player_name, game_state)

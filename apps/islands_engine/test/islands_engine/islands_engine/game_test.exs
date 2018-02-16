@@ -3,7 +3,7 @@ defmodule GameTest do
 
   use ExUnit.Case
 
-  alias IslandsEngine.{GameSupervisor, GameState, Game, Board, Island, Guesses, Coordinate, Rules}
+  alias IslandsEngine.{GameSupervisor, GameState, Game, Island, Guesses, Rules}
 
   setup do
     on_exit(fn ->
@@ -14,7 +14,7 @@ defmodule GameTest do
   end
 
   test "can start a new game with a player name" do
-    {:ok, game} = Game.start_link("Player 1")
+    Game.start_link("Player 1")
 
     %{
       player_one: %{
@@ -32,7 +32,7 @@ defmodule GameTest do
         player_two: :islands_not_set,
         state: :initialized
       }
-    } = :sys.get_state(game)
+    } = GameState.lookup("Player 1")
   end
 
   test "can add a second player" do
@@ -46,7 +46,7 @@ defmodule GameTest do
       rules: %Rules{
         state: :players_set
       }
-    } = :sys.get_state(game)
+    } = GameState.lookup("Player 1")
   end
 
   describe "position_island/5" do
@@ -61,7 +61,7 @@ defmodule GameTest do
       :ok = Game.position_island(game, :player_one, :dot, 1, 1)
       :ok = Game.position_island(game, :player_two, :square, 1, 1)
 
-      game_state = :sys.get_state(game)
+      game_state = GameState.lookup("Player 1")
       assert %Island{} = game_state.player_one.board.dot
       assert %Island{} = game_state.player_two.board.square
     end
@@ -162,10 +162,9 @@ defmodule GameTest do
       game_state = :sys.get_state(game)
 
       # Get to the start of the game with only two islands positioned
-      game_state =
-        :sys.replace_state(game, fn data ->
-          %{game_state | rules: %Rules{state: :player_one_turn}}
-        end)
+      :sys.replace_state(game, fn _ ->
+        %{game_state | rules: %Rules{state: :player_one_turn}}
+      end)
 
       assert {:hit, :none, :no_win} = Game.guess_coordinate(game, :player_one, 1, 1)
       assert :error = Game.guess_coordinate(game, :player_one, 1, 1)
@@ -184,7 +183,7 @@ defmodule GameTest do
   end
 
   test "initializes the game with existing state if it exists" do
-    existing_state = %{
+    initial_state = %{
       player_one: %{
         board: %{},
         guesses: %Guesses{hits: [], misses: []},
@@ -202,14 +201,10 @@ defmodule GameTest do
       }
     }
 
-    GameState.insert("Player 1", existing_state)
+    GameState.insert("Player 1", initial_state)
+    Game.start_link("Player 1")
 
-    {:ok, game} = Game.start_link("Player 1")
-    initial_state = :sys.get_state(game)
-
-    assert initial_state == existing_state
-
-    GameState.delete("Player 1")
+    assert initial_state == GameState.lookup("Player 1")
   end
 
   test "game state is saved after every successful event" do
@@ -223,7 +218,7 @@ defmodule GameTest do
     Game.position_island(game, :player_one, :square, 5, 5)
     Game.set_islands(game, :player_one)
 
-    [{_, state}] = GameState.lookup("Player 1")
+    state = GameState.lookup("Player 1")
     assert MapSet.size(state.player_one.board.atoll.coordinates) == 5
     assert MapSet.size(state.player_one.board.dot.coordinates) == 1
     assert MapSet.size(state.player_one.board.l_shape.coordinates) == 4
@@ -238,7 +233,7 @@ defmodule GameTest do
     Game.position_island(game, :player_two, :square, 5, 5)
     Game.set_islands(game, :player_two)
 
-    [{_, state}] = GameState.lookup("Player 1")
+    state = GameState.lookup("Player 1")
     assert MapSet.size(state.player_two.board.atoll.coordinates) == 5
     assert MapSet.size(state.player_two.board.dot.coordinates) == 1
     assert MapSet.size(state.player_two.board.l_shape.coordinates) == 4

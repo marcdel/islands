@@ -7,7 +7,7 @@ defmodule IslandsEngine.Rules do
             player_one: :islands_not_set,
             player_two: :islands_not_set
 
-  def new() do
+  def new do
     %Rules{}
   end
 

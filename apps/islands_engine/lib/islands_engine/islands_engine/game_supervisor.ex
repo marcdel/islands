@@ -1,4 +1,6 @@
 defmodule IslandsEngine.GameSupervisor do
+  @moduledoc false
+
   use Supervisor
 
   alias IslandsEngine.{Game, GameState}

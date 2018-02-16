@@ -3,7 +3,7 @@ defmodule GameTest do
 
   use ExUnit.Case
 
-  alias IslandsEngine.{GameSupervisor, Game, Board, Island, Guesses, Coordinate, Rules}
+  alias IslandsEngine.{GameSupervisor, GameState, Game, Board, Island, Guesses, Coordinate, Rules}
 
   setup do
     on_exit(fn ->
@@ -202,14 +202,14 @@ defmodule GameTest do
       }
     }
 
-    :ets.insert(:game_state, {"Player 1", existing_state})
+    GameState.insert("Player 1", existing_state)
 
     {:ok, game} = Game.start_link("Player 1")
     initial_state = :sys.get_state(game)
 
     assert initial_state == existing_state
 
-    :ets.delete(:game_state, "Player 1")
+    GameState.delete("Player 1")
   end
 
   test "game state is saved after every successful event" do
@@ -223,7 +223,7 @@ defmodule GameTest do
     Game.position_island(game, :player_one, :square, 5, 5)
     Game.set_islands(game, :player_one)
 
-    state = query_saved_state("Player 1")
+    [{_, state}] = GameState.lookup("Player 1")
     assert MapSet.size(state.player_one.board.atoll.coordinates) == 5
     assert MapSet.size(state.player_one.board.dot.coordinates) == 1
     assert MapSet.size(state.player_one.board.l_shape.coordinates) == 4
@@ -238,7 +238,7 @@ defmodule GameTest do
     Game.position_island(game, :player_two, :square, 5, 5)
     Game.set_islands(game, :player_two)
 
-    state = query_saved_state("Player 1")
+    [{_, state}] = GameState.lookup("Player 1")
     assert MapSet.size(state.player_two.board.atoll.coordinates) == 5
     assert MapSet.size(state.player_two.board.dot.coordinates) == 1
     assert MapSet.size(state.player_two.board.l_shape.coordinates) == 4
@@ -247,10 +247,5 @@ defmodule GameTest do
     assert state.rules.player_two == :islands_set
 
     assert state.rules.state == :player_one_turn
-  end
-
-  defp query_saved_state(player_name) do
-    [{player_name, saved_state}] = :ets.lookup(:game_state, player_name)
-    saved_state
   end
 end

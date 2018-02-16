@@ -1,7 +1,7 @@
 defmodule IslandsEngine.GameSupervisor do
   use Supervisor
 
-  alias IslandsEngine.Game
+  alias IslandsEngine.{Game, GameState}
 
   def start_link(_options) do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -16,7 +16,7 @@ defmodule IslandsEngine.GameSupervisor do
   end
 
   def stop_game(player_name) do
-    :ets.delete(:game_state, player_name)
+    GameState.delete(player_name)
     Supervisor.terminate_child(__MODULE__, pid_from_name(player_name))
   end
 

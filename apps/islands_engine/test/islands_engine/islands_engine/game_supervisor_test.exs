@@ -1,7 +1,7 @@
 defmodule IslandsEngine.GameSupervisorTest do
   use ExUnit.Case
 
-  alias IslandsEngine.{GameSupervisor, Game, Guesses, Rules}
+  alias IslandsEngine.{GameSupervisor, GameState, Game, Guesses, Rules}
 
   setup do
     {:ok, game} = GameSupervisor.start_game("Player 1")
@@ -42,7 +42,7 @@ defmodule IslandsEngine.GameSupervisorTest do
 
       assert Game.via_tuple("Player 1") |> GenServer.whereis() == nil
 
-      assert :ets.lookup(:game_state, "Player 1") == []
+      assert GameState.lookup("Player 1") == []
     end
 
     test "cannot stop non-existent games" do

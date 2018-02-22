@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="mix test" type="MixExUnitRunConfigurationType" factoryName="Elixir Mix ExUnit" show_console_on_std_err="false" show_console_on_std_out="false">
+    <option name="passParentEnvs" value="false" />
+    <option name="programParameters" value="" />
+    <option name="workingDirectory" value="" />
+    <module>
+      <option name="moduleName" value="" />
+    </module>
+    <envs />
+    <method />
+  </configuration>
+</component>

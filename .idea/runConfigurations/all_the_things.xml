@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="all the things" type="CompoundRunConfigurationType" factoryName="Compound Run Configuration">
+    <toRun type="MixRunConfigurationType" name="mix credo" />
+    <toRun type="MixRunConfigurationType" name="mix format" />
+    <toRun type="MixExUnitRunConfigurationType" name="mix test" />
+    <method />
+  </configuration>
+</component>

@@ -3,7 +3,7 @@ defmodule IslandsInterfaceWeb.GameChannel do
 
   alias IslandsEngine.{Game, GameSupervisor}
 
-  def join("game:" <> _player, payload, socket) do
+  def join("game:" <> _player, _payload, socket) do
     {:ok, socket}
   end
 
@@ -31,6 +31,17 @@ defmodule IslandsInterfaceWeb.GameChannel do
 
       :error ->
         {:reply, :error, socket}
+    end
+  end
+
+  def handle_in("position_island", payload, socket) do
+    %{"player" => player, "island" => island, "row" => row, "col" => col} = payload
+    player_name = String.to_existing_atom(player)
+    island = String.to_existing_atom(island)
+
+    case Game.position_island(via(socket.topic), player_name, island, row, col) do
+      :ok -> {:reply, :ok, socket}
+      _ -> {:reply, :error, socket}
     end
   end
 

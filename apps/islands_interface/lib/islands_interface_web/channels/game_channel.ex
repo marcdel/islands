@@ -18,4 +18,21 @@ defmodule IslandsInterfaceWeb.GameChannel do
         {:reply, {:error, %{reason: inspect(reason)}}, socket}
     end
   end
+
+  def handle_in("add_player", player_name, socket) do
+    case Game.add_player(via(socket.topic), player_name) do
+      :ok ->
+        broadcast!(socket, "player_added", %{message: "A new player just joined: " <> player_name})
+
+        {:noreply, socket}
+
+      {:error, reason} ->
+        {:reply, {:error, %{reason: inspect(reason)}}, socket}
+
+      :error ->
+        {:reply, :error, socket}
+    end
+  end
+
+  defp via("game:" <> player_name), do: Game.via_tuple(player_name)
 end

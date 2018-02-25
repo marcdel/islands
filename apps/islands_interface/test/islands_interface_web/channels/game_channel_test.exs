@@ -62,7 +62,7 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
   end
 
   describe "position_island" do
-    test "replies to each player, individually when they position islands", %{socket: socket} do
+    test "players receive a reply when they position their islands", %{socket: socket} do
       push(socket, "new_game")
       push(socket, "add_player", "player_two")
 
@@ -105,5 +105,112 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
 
       assert_reply(ref, :error)
     end
+  end
+
+  describe "set_islands" do
+    test "both players receive a broacast when a player sets their islands", %{socket: socket} do
+      position_all_islands(socket)
+
+      push(socket, "set_islands", "player_one")
+      assert_broadcast("player_set_islands", %{player: :player_one})
+      assert_push("player_set_islands", %{player: :player_one})
+      assert GameState.lookup("player_one").rules.state == :players_set
+
+      push(socket, "set_islands", "player_two")
+      assert_broadcast("player_set_islands", %{player: :player_two})
+      assert_push("player_set_islands", %{player: :player_two})
+      assert GameState.lookup("player_one").rules.state == :player_one_turn
+    end
+
+    test "player receives a reply with their board when positioning islands", %{socket: socket} do
+      position_all_islands(socket)
+
+      ref = push(socket, "set_islands", "player_two")
+
+      assert_reply(ref, :ok, %{board: _board})
+    end
+
+    test "errors are only sent to the player attempting to set their islands", %{socket: socket} do
+      push(socket, "new_game")
+
+      ref = push(socket, "set_islands", "player_two")
+
+      assert_reply(ref, :error)
+    end
+  end
+
+  defp position_all_islands(socket) do
+    push(socket, "new_game")
+    push(socket, "add_player", "player_two")
+
+    push(socket, "position_island", %{
+      "player" => "player_one",
+      "island" => "atoll",
+      "row" => 1,
+      "col" => 1
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_one",
+      "island" => "dot",
+      "row" => 1,
+      "col" => 4
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_one",
+      "island" => "l_shape",
+      "row" => 1,
+      "col" => 5
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_one",
+      "island" => "s_shape",
+      "row" => 5,
+      "col" => 1
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_one",
+      "island" => "square",
+      "row" => 5,
+      "col" => 5
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_two",
+      "island" => "atoll",
+      "row" => 1,
+      "col" => 1
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_two",
+      "island" => "dot",
+      "row" => 1,
+      "col" => 4
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_two",
+      "island" => "l_shape",
+      "row" => 1,
+      "col" => 5
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_two",
+      "island" => "s_shape",
+      "row" => 5,
+      "col" => 1
+    })
+
+    push(socket, "position_island", %{
+      "player" => "player_two",
+      "island" => "square",
+      "row" => 5,
+      "col" => 5
+    })
   end
 end

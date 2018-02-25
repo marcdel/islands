@@ -70,6 +70,11 @@ defmodule GameTest do
       assert {:error, :invalid_coordinate} = Game.position_island(game, :player_one, :dot, 12, 12)
     end
 
+    test "handles overlapping islands", %{game: game} do
+      Game.position_island(game, :player_one, :square, 1, 1)
+      assert {:error, :overlapping_island} = Game.position_island(game, :player_one, :dot, 1, 1)
+    end
+
     test "handles invalid island types", %{game: game} do
       assert {:error, :invalid_island_type} =
                Game.position_island(game, :player_one, :invalid_island, 1, 1)

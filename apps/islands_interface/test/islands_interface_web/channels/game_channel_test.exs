@@ -139,6 +139,55 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
     end
   end
 
+  describe "guess_coordinate" do
+    test "broadcasts hits and misses to both players", %{socket: socket} do
+      position_all_islands(socket)
+
+      push(socket, "set_islands", "player_one")
+      push(socket, "set_islands", "player_two")
+
+      push(socket, "guess_coordinate", %{"player" => "player_one", "row" => 1, "col" => 1})
+
+      assert_broadcast("player_guessed_coordinate", %{
+        player: :player_one,
+        row: 1,
+        col: 1,
+        result: %{hit: true, island: :none, win: :no_win}
+      })
+
+      push(socket, "guess_coordinate", %{"player" => "player_two", "row" => 10, "col" => 10})
+
+      assert_broadcast("player_guessed_coordinate", %{
+        player: :player_two,
+        row: 10,
+        col: 10,
+        result: %{hit: false, island: :none, win: :no_win}
+      })
+    end
+
+    test "rule errors are only sent to the player", %{socket: socket} do
+      position_all_islands(socket)
+
+      push(socket, "set_islands", "player_one")
+      push(socket, "set_islands", "player_two")
+
+      ref = push(socket, "guess_coordinate", %{"player" => "player_two", "row" => 1, "col" => 1})
+      assert_reply(ref, :error, %{player: :player_two, reason: "Not your turn."})
+    end
+
+    test "game errors are only sent to the player", %{socket: socket} do
+      position_all_islands(socket)
+
+      push(socket, "set_islands", "player_one")
+      push(socket, "set_islands", "player_two")
+
+      ref =
+        push(socket, "guess_coordinate", %{"player" => "player_one", "row" => 11, "col" => 11})
+
+      assert_reply(ref, :error)
+    end
+  end
+
   defp position_all_islands(socket) do
     push(socket, "new_game")
     push(socket, "add_player", "player_two")

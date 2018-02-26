@@ -20,6 +20,25 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
     test "adds user to the list of presence subscribers", %{socket: socket} do
       assert %{"PlayerOne" => %{metas: [%{online_at: _, phx_ref: _}]}} = Presence.list(socket)
     end
+
+    test "no more than two players can join a game", %{socket: socket} do
+      assert {:ok, _reply, _socket} =
+               subscribe_and_join(socket, GameChannel, "game:PlayerOne", %{
+                 "screen_name" => "PlayerTwo"
+               })
+
+      assert {:error, %{reason: "unauthorized"}} =
+               subscribe_and_join(socket, GameChannel, "game:PlayerOne", %{
+                 "screen_name" => "PlayerThree"
+               })
+    end
+
+    test "two players with the same screen_name cannot join the same game", %{socket: socket} do
+      assert {:error, %{reason: "unauthorized"}} =
+               subscribe_and_join(socket, GameChannel, "game:PlayerOne", %{
+                 "screen_name" => "PlayerOne"
+               })
+    end
   end
 
   describe "show_subscribers" do

@@ -7,10 +7,10 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
   setup do
     {:ok, _, socket} =
       socket()
-      |> subscribe_and_join(GameChannel, "game:player_one")
+      |> subscribe_and_join(GameChannel, "game:PlayerOne")
 
     on_exit(fn ->
-      GameSupervisor.stop_game("player_one")
+      GameSupervisor.stop_game("PlayerOne")
     end)
 
     {:ok, socket: socket}
@@ -22,8 +22,8 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
 
       assert_reply(ref, :ok)
 
-      game_state = GameState.lookup("player_one")
-      assert game_state.player_one.name == "player_one"
+      game_state = GameState.lookup("PlayerOne")
+      assert game_state.player_one.name == "PlayerOne"
       assert game_state.player_two.name == nil
     end
 
@@ -40,22 +40,22 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
     test "adding a player to an existing game broadcasts to both players", %{socket: socket} do
       push(socket, "new_game")
 
-      push(socket, "add_player", "player_two")
+      push(socket, "add_player", "PlayerTwo")
 
-      assert_broadcast("player_added", %{message: "A new player just joined: player_two"})
-      assert_push("player_added", %{message: "A new player just joined: player_two"})
+      assert_broadcast("player_added", %{message: "A new player just joined: PlayerTwo"})
+      assert_push("player_added", %{message: "A new player just joined: PlayerTwo"})
 
-      game_state = GameState.lookup("player_one")
-      assert game_state.player_one.name == "player_one"
-      assert game_state.player_two.name == "player_two"
+      game_state = GameState.lookup("PlayerOne")
+      assert game_state.player_one.name == "PlayerOne"
+      assert game_state.player_two.name == "PlayerTwo"
     end
 
     test "errors are only sent to the user who pushed the message", %{socket: socket} do
       push(socket, "new_game")
       # add a player so that adding a third will fail
-      push(socket, "add_player", "player_two")
+      push(socket, "add_player", "PlayerTwo")
 
-      ref = push(socket, "add_player", "player_three")
+      ref = push(socket, "add_player", "PlayerThree")
 
       assert_reply(ref, :error)
     end
@@ -64,7 +64,7 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
   describe "position_island" do
     test "players receive a reply when they position their islands", %{socket: socket} do
       push(socket, "new_game")
-      push(socket, "add_player", "player_two")
+      push(socket, "add_player", "PlayerTwo")
 
       player_one_ref =
         push(socket, "position_island", %{
@@ -86,14 +86,14 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
 
       assert_reply(player_two_ref, :ok)
 
-      game_state = GameState.lookup("player_one")
+      game_state = GameState.lookup("PlayerOne")
       assert %{square: %Island{}} = game_state.player_one.board
       assert %{square: %Island{}} = game_state.player_two.board
     end
 
     test "replies to each player when there is an error", %{socket: socket} do
       push(socket, "new_game")
-      push(socket, "add_player", "player_two")
+      push(socket, "add_player", "PlayerTwo")
 
       ref =
         push(socket, "position_island", %{
@@ -114,12 +114,12 @@ defmodule IslandsInterfaceWeb.GameChannelTest do
       push(socket, "set_islands", "player_one")
       assert_broadcast("player_set_islands", %{player: :player_one})
       assert_push("player_set_islands", %{player: :player_one})
-      assert GameState.lookup("player_one").rules.state == :players_set
+      assert GameState.lookup("PlayerOne").rules.state == :players_set
 
       push(socket, "set_islands", "player_two")
       assert_broadcast("player_set_islands", %{player: :player_two})
       assert_push("player_set_islands", %{player: :player_two})
-      assert GameState.lookup("player_one").rules.state == :player_one_turn
+      assert GameState.lookup("PlayerOne").rules.state == :player_one_turn
     end
 
     test "player receives a reply with their board when positioning islands", %{socket: socket} do

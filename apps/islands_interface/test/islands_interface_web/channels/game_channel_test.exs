@@ -1,19 +1,33 @@
 defmodule IslandsInterfaceWeb.GameChannelTest do
   use IslandsInterfaceWeb.ChannelCase
 
-  alias IslandsInterfaceWeb.GameChannel
+  alias IslandsInterfaceWeb.{GameChannel, Presence}
   alias IslandsEngine.{GameSupervisor, GameState, Island}
 
   setup do
     {:ok, _, socket} =
       socket()
-      |> subscribe_and_join(GameChannel, "game:PlayerOne")
+      |> subscribe_and_join(GameChannel, "game:PlayerOne", %{"screen_name" => "PlayerOne"})
 
     on_exit(fn ->
       GameSupervisor.stop_game("PlayerOne")
     end)
 
     {:ok, socket: socket}
+  end
+
+  describe "join" do
+    test "adds user to the list of presence subscribers", %{socket: socket} do
+      assert %{"PlayerOne" => %{metas: [%{online_at: _, phx_ref: _}]}} = Presence.list(socket)
+    end
+  end
+
+  describe "show_subscribers" do
+    test "can list all presence subscribers", %{socket: socket} do
+      push(socket, "show_subscribers")
+
+      assert_broadcast("subscribers", %{"PlayerOne" => %{metas: [%{online_at: _, phx_ref: _}]}})
+    end
   end
 
   describe "new_game" do
